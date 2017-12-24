@@ -1,8 +1,5 @@
 function hardReset() {
-    Game.HardReset();
-    Game.HardReset(1);
     Game.HardReset(2);
-    Game.ClosePrompt();
 }
 
 function getCookies() {
