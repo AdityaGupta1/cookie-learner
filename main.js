@@ -128,13 +128,36 @@ for (var i = 0; i < numberOfNetworks; i++) {
     networks[i] = new Array(2);
 }
 
-var networkIndex = 0;
+function networkToArray(network) {
+    return [].concat.apply([], [].concat.apply([], network));
+}
+
+function arrayToNetwork(array) {
+    var network = [[], []];
+
+    var inputNodes = currentNetwork[0].length;
+    var hiddenNodes = currentNetwork[1].length;
+    var outputNodes = currentNetwork[1][0].length;
+
+    var firstLayer = array.slice(0, inputNodes * hiddenNodes);
+    for (var i = 0; i < inputNodes * hiddenNodes; i += hiddenNodes) {
+        network[0][i / hiddenNodes] = firstLayer.slice(i, i + hiddenNodes);
+    }
+
+    var secondLayer = array.slice(inputNodes * hiddenNodes);
+    for (var j = 0; j < hiddenNodes * outputNodes; j += outputNodes) {
+        network[1][j / outputNodes] = secondLayer.slice(j, j + outputNodes);
+    }
+
+    return network;
+}
 
 // time in seconds to run each network
-var networkTime = 60;
+var networkTime = 1;
 networkTime *= 1000;
 networkTime += 100;
 
+var networkIndex = 0;
 
 function doStuff() {
     var option = getIndexOfMax(getOutputs());
