@@ -129,32 +129,40 @@ for (var i = 0; i < numberOfNetworks; i++) {
     networks[i] = new Array(2);
 }
 
-function networkToArray(network) {
-    return [].concat.apply([], [].concat.apply([], network));
+function networkToArray(startingNetwork) {
+    var finishedArray = [];
+
+    for (var i = 0; i < startingNetwork.length; i++) {
+        for (var j = 0; j < startingNetwork[i].length; j++) {
+            finishedArray = finishedArray.concat(startingNetwork[i][j]);
+        }
+    }
+
+    return finishedArray;
 }
 
-function arrayToNetwork(array) {
-    var network = [[], []];
+function arrayToNetwork(startingArray) {
+    var finishedNetwork = [[], []];
 
     var inputNodes = currentNetwork[0].length;
     var hiddenNodes = currentNetwork[1].length;
     var outputNodes = currentNetwork[1][0].length;
 
-    var firstLayer = array.slice(0, inputNodes * hiddenNodes);
+    var firstLayer = startingArray.slice(0, inputNodes * hiddenNodes);
     for (var i = 0; i < inputNodes * hiddenNodes; i += hiddenNodes) {
-        network[0][i / hiddenNodes] = firstLayer.slice(i, i + hiddenNodes);
+        finishedNetwork[0][i / hiddenNodes] = firstLayer.slice(i, i + hiddenNodes);
     }
 
-    var secondLayer = array.slice(inputNodes * hiddenNodes);
+    var secondLayer = startingArray.slice(inputNodes * hiddenNodes);
     for (var j = 0; j < hiddenNodes * outputNodes; j += outputNodes) {
-        network[1][j / outputNodes] = secondLayer.slice(j, j + outputNodes);
+        finishedNetwork[1][j / outputNodes] = secondLayer.slice(j, j + outputNodes);
     }
 
-    return network;
+    return finishedNetwork;
 }
 
 // time in seconds to run each network
-var networkTime = 5 * 60;
+var networkTime = 1;
 networkTime *= 1000;
 networkTime += 100;
 
@@ -190,6 +198,7 @@ function runNetwork(timeToRun) {
     setTimeout(function() {
         clearInterval(loop);
         var fitness = (getCPS() * 100) + getCookies();
+        console.log(fitness);
         doStuffWithFitness(fitness);
     }, timeToRun);
 }
@@ -226,7 +235,10 @@ function doStuffWithFitness(fitness) {
             console.log('done with generation ' + generationNumber);
             generationNumber++;
 
-            console.log(networks);
+
+            for (var i = 0; i < networks.length; i++) {
+                console.log('network ' + i + ': ' + networks[i][0] + '\nfitness: ' + networks[i][1]);
+            }
 
             propagate();
 
@@ -254,10 +266,15 @@ function propagate() {
     for (var j = 0; j < networks.length; j++) {
         networks[j][1] = 0;
 
-        var otherNetwork = networkToArray(networks[j][0]);
+        var offspring = new Array(mostFit.length);
 
-        for (var k = 0; k < otherNetwork.length; k++) {
-            otherNetwork[k] = signedSqrt(otherNetwork[k] * mostFit[k]) * (0.9 + (Math.random() / 5));
+        for (var k = 0; k < mostFit.length; k++) {
+            offspring[k] = signedSqrt((networks[j][0]).slice()[k] * mostFit[k]) * (0.9 + (Math.random() / 5));
+            console.log((networks[j][0]).slice()[k]);
         }
+
+        console.log(offspring);
+
+        networks[j][0] = arrayToNetwork(offspring);
     }
 }
