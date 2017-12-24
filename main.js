@@ -9,16 +9,39 @@ function getCookies() {
     return Game.cookies;
 }
 
+function getSqrtCookies() {
+    return Math.sqrt(Game.cookies);
+}
+
 function getCPS() {
     return Game.cookiesPs;
 }
 
-function getCursors() {
-    return parseInt(document.getElementById('productOwned0').innerHTML);
+function getProduct(id) {
+    var string = document.getElementById('productOwned' + id).innerHTML;
+
+    if (string === '') {
+        return 0;
+    }
+
+    return parseInt(string);
 }
 
-function getGrandmas() {
-    return parseInt(document.getElementById('productOwned1').innerHTML);
+// 0 = cookies, 1 = cps, others = product id + 2
+function calculateInput(input) {
+    switch (input) {
+        default:
+        case 0:
+            return getSqrtCookies();
+            break;
+        case 1:
+            return getCPS();
+            break;
+        case 2:
+        case 3:
+            return getProduct(input - 2);
+            break;
+    }
 }
 
 var network = [[], []];
@@ -38,25 +61,28 @@ function fillNetwork(inputNodes, hiddenNodes, outputNodes) {
         for (var l = 0; l < network[k].length; l++) {
             // individual weights
             for (var m = 0; m < network[k][l].length; m++) {
-                network [k][l][m] = (Math.random() * 4) - 2;
+                network [k][l][m] = (Math.random() * 50) - 25;
             }
         }
     }
 }
 
-fillNetwork(3, 4, 5);
+function calculateHidden(hidden) {
+    var sum = 0;
 
-// assumes the first node is number 0
-function calculateNode(node) {
-    return (getCookies() * network[0][0][node]) + (getCPS() * network[0][1][node]) + (getCursors() * network[0][2][node]) + (getGrandmas() * network[0][3][node]);
+    for (var i = 0; i < network[0].length; i++) {
+        sum += calculateInput(i) * network[0][i][hidden];
+    }
+
+    return sum;
 }
 
-// 0 = click, 1 = cursor, 2 = grandma
+// 0 = click, others = product id + 1
 function calculateOutput(output) {
     var sum = 0;
 
-    for (var i = 0; i < network[0][0].length; i++) {
-        sum += calculateNode(i) * network[1][node][output];
+    for (var i = 0; i < network[1].length; i++) {
+        sum += calculateHidden(i) * network[1][i][output];
     }
 
     return sum;
@@ -77,7 +103,8 @@ function getIndexOfMax(array) {
         }
     }
 
-    return i;
+    console.log(array);
+    return index;
 }
 
 function clickCookie() {
@@ -85,11 +112,16 @@ function clickCookie() {
 }
 
 function buyProduct(id) {
+    if (getCookies() < parseInt(document.getElementById('productPrice' + id).innerHTML)) {
+        clickCookie();
+        return;
+    }
+
     Game.ClickProduct(id);
 }
 
 function doStuff() {
-    var option = getIndexOfMax(getOutputs);
+    var option = getIndexOfMax(getOutputs());
 
     switch (option) {
         default:
@@ -101,12 +133,22 @@ function doStuff() {
             buyProduct(option - 1);
             break;
     }
+}
 
-    console.log(option);
+function getFitness(time) {
+    var loop = setInterval(function(){ doStuff(); }, 100);
+    setTimeout(function(){
+        clearInterval(loop);
+        var fitness = (getCPS() * 100) + getCookies();
+        doStuffWithFitness(fitness);
+    }, time);
 }
 
 function start() {
-    setInterval(function(){
-        doStuff();
-    }, 100);
+    fillNetwork(3, 4, 5);
+    console.log(getFitness(60000));
+}
+
+function doStuffWithFitness(fitness) {
+    console.log(fitness);
 }
