@@ -113,7 +113,8 @@ function clickCookie() {
 }
 
 function buyProduct(id) {
-    if (getCookies() < parseInt(document.getElementById('productPrice' + id).innerHTML)) {
+    if (getCookies() < parseInt(document.getElementById('productPrice' + id).innerHTML)
+        || document.getElementById('product' + id).classList.contains('toggledOff')) {
         clickCookie();
         return;
     }
@@ -153,17 +154,23 @@ function arrayToNetwork(array) {
 }
 
 // time in seconds to run each network
-var networkTime = 1;
+var networkTime = 5 * 60;
 networkTime *= 1000;
 networkTime += 100;
 
 var networkIndex = 0;
 
+var generationNumber = 0;
+
+var logData = false;
+
 function doStuff() {
     var option = getIndexOfMax(getOutputs());
 
-    console.log('outputs: ' + getOutputs());
-    console.log('option: ' + option);
+    if (logData) {
+        console.log('outputs: ' + getOutputs());
+        console.log('option: ' + option);
+    }
 
     switch (true) {
         default:
@@ -197,12 +204,14 @@ function createRandomNetworks() {
     currentNetwork = networks[0][0];
 }
 
-function start() {
+function start(flag) {
+    logData = flag;
+
     hardReset();
 
     createRandomNetworks();
 
-    runNetwork(networkTime);
+    setTimeout(function() { runNetwork(networkTime); }, 2000)
 }
 
 function doStuffWithFitness(fitness) {
@@ -214,14 +223,41 @@ function doStuffWithFitness(fitness) {
         networkIndex++;
 
         if (networkIndex === 10) {
+            console.log('done with generation ' + generationNumber);
+            generationNumber++;
+
             console.log(networks);
 
-            // move to next generation
+            propagate();
 
-            return;
+            networkIndex = 0;
         }
 
         currentNetwork = networks[networkIndex][0];
         runNetwork(networkTime);
-    }, 1000);
+    }, 2000);
+}
+
+function signedSqrt(number) {
+    return Math.sign(number) * Math.sqrt(number);
+}
+
+function propagate() {
+    var fitnesses = new Array(10);
+
+    for (var i = 0; i < networks.length; i++) {
+        fitnesses[i] = networks[i][1];
+    }
+
+    var mostFit = networkToArray(networks[getIndexOfMax(fitnesses)][0]);
+
+    for (var j = 0; j < networks.length; j++) {
+        networks[j][1] = 0;
+
+        var otherNetwork = networkToArray(networks[j][0]);
+
+        for (var k = 0; k < otherNetwork.length; k++) {
+            otherNetwork[k] = signedSqrt(otherNetwork[k] * mostFit[k]) * (0.9 + (Math.random() / 5));
+        }
+    }
 }
